@@ -1,52 +1,91 @@
 package com.example.episense
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.episense.ui.citizen.CitizenMainScreen
+import com.example.episense.ui.auth.LoginScreen
+import com.example.episense.ui.auth.RegisterScreen
 import com.example.episense.ui.theme.EpiSenseTheme
-import com.example.episense.utils.SeederManager // Import SeederManager
+import com.example.episense.utils.SeederManager
+import com.example.episense.viewmodel.AuthState
+import com.example.episense.viewmodel.AuthViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Panggil seeder. Ia akan otomatis mengecek apakah data sudah ada.
+        // Seeder sudah dimatikan akses write-nya di Firestore, jadi aman dibiarkan di sini
         SeederManager.seedDataIfNeeded()
 
         enableEdgeToEdge()
         setContent {
             EpiSenseTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "EpiSense",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    val authViewModel: AuthViewModel = viewModel()
+                    val authState by authViewModel.authState.collectAsState()
+                    val context = LocalContext.current
+
+                    // Pantau status Autentikasi
+                    LaunchedEffect(authState) {
+                        when (authState) {
+                            is AuthState.Success -> {
+                                Toast.makeText(context, "Berhasil!", Toast.LENGTH_SHORT).show()
+                                authViewModel.resetState() // Reset agar tidak terjadi navigasi berulang
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true } // Hapus history login
+                                }
+                            }
+                            is AuthState.Error -> {
+                                val errorMessage = (authState as AuthState.Error).message
+                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                authViewModel.resetState()
+                            }
+                            else -> {}
+                        }
+                    }
+
+                    NavHost(navController = navController, startDestination = "login") {
+                        composable("login") {
+                            LoginScreen(
+                                onNavigateToRegister = { navController.navigate("register") },
+                                onLoginClick = { email, password ->
+                                    authViewModel.login(email, password)
+                                }
+                            )
+                        }
+                        composable("register") {
+                            RegisterScreen(
+                                onNavigateToLogin = { navController.popBackStack() },
+                                onRegisterClick = { name, email, password ->
+                                    authViewModel.register(name, email, password)
+                                }
+                            )
+                        }
+                        composable("home") {
+                            CitizenMainScreen()
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    EpiSenseTheme {
-        Greeting("Android")
     }
 }
