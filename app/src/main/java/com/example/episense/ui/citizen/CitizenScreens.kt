@@ -10,34 +10,34 @@ import androidx.compose.ui.Modifier
 @Composable
 fun HomeScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Halaman Home (Ringkasan & Alert)")
+        Text("KAMU HITAM MALARIA")
     }
 }
 
 @Composable
 fun EducationScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Halaman Edukasi Malaria")
+        Text("KAMU CIBAI MALARIA")
     }
 }
 
 @Composable
 fun ReportScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Halaman Form Laporan Gejala")
+        Text("KAMU CIHEI MALARIA")
     }
 }
 
 @Composable
 fun AlertScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Halaman Daftar Alert/Peringatan")
+        Text("KAMU CIBUL MALARIA")
     }
 }
 
 @Composable
 fun AIScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Halaman Chatbot AI Gemini")
+        Text("KAMU CABUL MALARIA")
     }
 }
