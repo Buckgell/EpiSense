@@ -25,7 +25,7 @@ class ChatViewModel : ViewModel() {
     init {
         // Pesan sapaan awal dari AI
         _messages.value = listOf(
-            ChatMessage("Halo! Saya asisten AI EpiSense. Ada yang bisa saya bantu terkait informasi kesehatan atau malaria hari ini?", isUser = false)
+            ChatMessage("Halo! Saya asisten AI EpiSense HITAM. Ada yang bisa saya bantu terkait informasi kesehatan atau malaria hari ini?", isUser = false)
         )
     }
 

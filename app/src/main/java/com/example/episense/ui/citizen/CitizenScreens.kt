@@ -28,14 +28,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import com.example.episense.viewmodel.ReportState
 import com.example.episense.viewmodel.ReportViewModel
 
 @Composable
-fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -61,30 +73,30 @@ fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = android
                 // 1. Kartu Peringatan Terbaru
                 state.latestAlert?.let { alert ->
                     Text("Peringatan Terbaru", style = MaterialTheme.typography.titleMedium)
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = if (alert.severity == "High") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
-                        androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(text = alert.title, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(text = alert.message, style = MaterialTheme.typography.bodySmall)
                         }
                     }
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
                 // 2. Kartu Statistik Kasus
                 Text("Statistik 30 Laporan Terakhir", style = MaterialTheme.typography.titleMedium)
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    androidx.compose.foundation.layout.Column(
+                    Column(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -110,16 +122,16 @@ fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = android
 }
 
 @Composable
-fun EducationScreen(viewModel: com.example.episense.viewmodel.EducationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun EducationScreen(viewModel: com.example.episense.viewmodel.EducationViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         Text("Edukasi Malaria", style = MaterialTheme.typography.headlineMedium)
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         when (uiState) {
             is com.example.episense.viewmodel.EducationState.Loading -> {
@@ -138,9 +150,9 @@ fun EducationScreen(viewModel: com.example.episense.viewmodel.EducationViewModel
                                 .padding(vertical = 8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
-                            androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Text(text = edu.title, style = MaterialTheme.typography.titleLarge)
-                                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(text = edu.content, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
@@ -239,16 +251,16 @@ fun ReportScreen(viewModel: ReportViewModel = viewModel()) {
 }
 
 @Composable
-fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
-    androidx.compose.foundation.layout.Column(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         Text("Peringatan Darurat", style = MaterialTheme.typography.headlineMedium)
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         when (uiState) {
             is com.example.episense.viewmodel.AlertState.Loading -> {
@@ -273,9 +285,9 @@ fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = andro
                                     containerColor = if (alert.severity == "High") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
                                 )
                             ) {
-                                androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                                Column(modifier = Modifier.padding(16.dp)) {
                                     Text(text = alert.title, style = MaterialTheme.typography.titleLarge)
-                                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(text = alert.message, style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
@@ -294,8 +306,96 @@ fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = andro
 }
 
 @Composable
-fun AIScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("KAMU CABUL MALARIA")
+fun AIScreen(viewModel: com.example.episense.viewmodel.ChatViewModel = viewModel()) {
+    val messages by viewModel.messages.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    var inputText by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary,
+            shadowElevation = 4.dp
+        ) {
+            Text(
+                text = "Tanya AI EpiSense",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        // Daftar Pesan Chat
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            reverseLayout = false // Menampilkan dari atas ke bawah
+        ) {
+            items(messages.size) { index ->
+                val msg = messages[index]
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = if (msg.isUser) Arrangement.End else Arrangement.Start
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .fillMaxWidth(0.8f), // Maksimal lebar chat bubble 80%
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (msg.isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = if (msg.isUser) 16.dp else 0.dp,
+                            bottomEnd = if (msg.isUser) 0.dp else 16.dp
+                        )
+                    ) {
+                        Text(
+                            text = msg.text,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+            if (isLoading) {
+                item {
+                    Text("AI sedang mengetik...", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(8.dp))
+                }
+            }
+        }
+
+        // Input Bawah
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Ketik pertanyaan Anda...") },
+                shape = RoundedCornerShape(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    viewModel.sendMessage(inputText)
+                    inputText = ""
+                },
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim", tint = MaterialTheme.colorScheme.onPrimary)
+            }
+        }
     }
 }
