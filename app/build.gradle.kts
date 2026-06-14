@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.episense"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.episense"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = 26
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
