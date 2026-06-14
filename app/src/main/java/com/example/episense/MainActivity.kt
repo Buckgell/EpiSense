@@ -12,16 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.episense.ui.theme.EpiSenseTheme
+import com.example.episense.utils.SeederManager // Import SeederManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Panggil seeder. Ia akan otomatis mengecek apakah data sudah ada.
+        SeederManager.seedDataIfNeeded()
+
         enableEdgeToEdge()
         setContent {
             EpiSenseTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "EpiSense",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -29,7 +34,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-//test hitam zeus
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
