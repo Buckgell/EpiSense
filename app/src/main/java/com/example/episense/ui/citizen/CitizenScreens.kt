@@ -28,20 +28,132 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import com.example.episense.viewmodel.ReportState
 import com.example.episense.viewmodel.ReportViewModel
 
 @Composable
-fun HomeScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("KAMU HITAM MALARIA")
+fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text("Halo, Warga!", style = MaterialTheme.typography.headlineMedium)
+        Text("Berikut adalah ringkasan situasi malaria saat ini.", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        when (uiState) {
+            is com.example.episense.viewmodel.HomeState.Loading -> {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is com.example.episense.viewmodel.HomeState.Success -> {
+                val state = uiState as com.example.episense.viewmodel.HomeState.Success
+
+                // 1. Kartu Peringatan Terbaru
+                state.latestAlert?.let { alert ->
+                    Text("Peringatan Terbaru", style = MaterialTheme.typography.titleMedium)
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (alert.severity == "High") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = alert.title, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = alert.message, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // 2. Kartu Statistik Kasus
+                Text("Statistik 30 Laporan Terakhir", style = MaterialTheme.typography.titleMedium)
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Total Kasus Terdeteksi", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            text = "${state.totalRecentCases}",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text("Di wilayah pantauan sistem", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.Gray)
+                    }
+                }
+            }
+            is com.example.episense.viewmodel.HomeState.Error -> {
+                Text(
+                    text = (uiState as com.example.episense.viewmodel.HomeState.Error).message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun EducationScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("KAMU CIBAI MALARIA")
+fun EducationScreen(viewModel: com.example.episense.viewmodel.EducationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text("Edukasi Malaria", style = MaterialTheme.typography.headlineMedium)
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+
+        when (uiState) {
+            is com.example.episense.viewmodel.EducationState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is com.example.episense.viewmodel.EducationState.Success -> {
+                val educations = (uiState as com.example.episense.viewmodel.EducationState.Success).educations
+                androidx.compose.foundation.lazy.LazyColumn {
+                    items(educations.size) { index ->
+                        val edu = educations[index]
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                                Text(text = edu.title, style = MaterialTheme.typography.titleLarge)
+                                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = edu.content, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+            }
+            is com.example.episense.viewmodel.EducationState.Error -> {
+                Text(
+                    text = (uiState as com.example.episense.viewmodel.EducationState.Error).message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
     }
 }
 
@@ -127,9 +239,57 @@ fun ReportScreen(viewModel: ReportViewModel = viewModel()) {
 }
 
 @Composable
-fun AlertScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("KAMU CIBUL MALARIA")
+fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text("Peringatan Darurat", style = MaterialTheme.typography.headlineMedium)
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+
+        when (uiState) {
+            is com.example.episense.viewmodel.AlertState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is com.example.episense.viewmodel.AlertState.Success -> {
+                val alerts = (uiState as com.example.episense.viewmodel.AlertState.Success).alerts
+                if (alerts.isEmpty()) {
+                    Text("Tidak ada peringatan saat ini.")
+                } else {
+                    androidx.compose.foundation.lazy.LazyColumn {
+                        items(alerts.size) { index ->
+                            val alert = alerts[index]
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                // Jika severity High, warna background akan sedikit merah
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (alert.severity == "High") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                androidx.compose.foundation.layout.Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(text = alert.title, style = MaterialTheme.typography.titleLarge)
+                                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                                    Text(text = alert.message, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            is com.example.episense.viewmodel.AlertState.Error -> {
+                Text(
+                    text = (uiState as com.example.episense.viewmodel.AlertState.Error).message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
     }
 }
 
