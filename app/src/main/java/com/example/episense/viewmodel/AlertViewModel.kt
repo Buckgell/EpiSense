@@ -24,7 +24,8 @@ class AlertViewModel : ViewModel() {
         fetchAlerts()
     }
 
-    private fun fetchAlerts() {
+    // Fungsi diubah menjadi PUBLIC agar bisa dipanggil oleh tombol Refresh di UI
+    fun fetchAlerts() {
         viewModelScope.launch {
             _uiState.value = AlertState.Loading
             val result = repository.getAlerts()
