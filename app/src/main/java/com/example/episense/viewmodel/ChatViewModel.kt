@@ -16,10 +16,10 @@ class ChatViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // GANTI "PASTE_API_KEY_ANDA_DI_SINI" dengan API Key dari Google AI Studio!
+    // API Key Anda sudah dimasukkan
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
-        apiKey = "PASTE_API_KEY_ANDA_DI_SINI"
+        modelName = "gemini-2.5-flash",
+        apiKey = "input api key"
     )
 
     init {
@@ -51,8 +51,10 @@ class ChatViewModel : ViewModel() {
                 updatedList.add(ChatMessage(aiResponse, isUser = false))
                 _messages.value = updatedList
             } catch (e: Exception) {
+                e.printStackTrace()
                 val errorList = _messages.value.toMutableList()
-                errorList.add(ChatMessage("Error: Koneksi bermasalah atau API Key tidak valid.", isUser = false))
+                // PERBAIKAN: Menghilangkan backslash agar error asli terbaca
+                errorList.add(ChatMessage("Error asli: ${e.localizedMessage ?: "Pesan error kosong dari sistem"}", isUser = false))
                 _messages.value = errorList
             } finally {
                 _isLoading.value = false
