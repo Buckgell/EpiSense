@@ -39,4 +39,25 @@ class EducationRepository {
         }
         batch.commit().await()
     }
+    // --- TAMBAHKAN FUNGSI INI UNTUK MEDICAL STAFF ---
+    suspend fun addEducation(title: String, content: String): Result<Boolean> {
+        return try {
+            val educationId = java.util.UUID.randomUUID().toString()
+
+            // Kita buat map data agar otomatis menyesuaikan dengan struktur Firestore Anda
+            val newEducation = hashMapOf(
+                "id" to educationId,
+                "title" to title,
+                "content" to content,
+                "author" to "Tenaga Medis", // Bisa diganti mengambil nama user yang login
+                "date" to System.currentTimeMillis() // Menggunakan timestamp
+            )
+
+            // Simpan ke collection "educations"
+            db.collection("educations").document(educationId).set(newEducation).await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
