@@ -48,10 +48,19 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(authState) {
                         when (authState) {
                             is AuthState.Success -> {
-                                Toast.makeText(context, "Berhasil!", Toast.LENGTH_SHORT).show()
+                                val user = (authState as AuthState.Success).user
+                                Toast.makeText(context, "Berhasil Login sebagai ${user.role}", Toast.LENGTH_SHORT).show()
                                 authViewModel.resetState() // Reset agar tidak terjadi navigasi berulang
-                                navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true } // Hapus history login
+
+                                // Pengecekan Role
+                                if (user.role == "medical_staff") {
+                                    navController.navigate("medical_home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                } else {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 }
                             }
                             is AuthState.Error -> {
@@ -82,6 +91,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("home") {
                             CitizenMainScreen()
+                        }
+                        composable("medical_home") {
+                            com.example.episense.ui.medical.MedicalMainScreen()
                         }
                     }
                 }

@@ -22,4 +22,19 @@ class ReportRepository {
             Result.failure(e)
         }
     }
+
+    // --- TAMBAHKAN FUNGSI INI ---
+    suspend fun getAllReports(): Result<List<Report>> {
+        return try {
+            // Mengambil semua laporan dan mengurutkannya dari yang terbaru
+            val snapshot = db.collection("reports")
+                .get()
+                .await()
+
+            val reports = snapshot.toObjects(Report::class.java).sortedByDescending { it.date }
+            Result.success(reports)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
