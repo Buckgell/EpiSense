@@ -51,7 +51,7 @@ fun AnalyticsScreen(viewModel: MedicalViewModel = viewModel()) {
                 factory = { context ->
                     PieChart(context).apply {
                         description.isEnabled = false
-                        isDrawHoleEnabled = true
+                        isDrawHoleEnabled = false
                         setEntryLabelColor(Color.BLACK)
                         setUsePercentValues(true)
                     }

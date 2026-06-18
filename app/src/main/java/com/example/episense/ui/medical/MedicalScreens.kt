@@ -17,19 +17,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.episense.ui.citizen.BottomNavItem
 
+// PERBAIKAN: Menambahkan Analytics dan Profile
 sealed class MedicalNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Dashboard : MedicalNavItem("med_dashboard", "Laporan", Icons.Filled.List)
+    object Analytics : MedicalNavItem("analytics_tab", "Analitik", Icons.Filled.PieChart)
     object AddEducation : MedicalNavItem("med_add_edu", "Edukasi", Icons.Filled.MenuBook)
     object AddAlert : MedicalNavItem("med_add_alert", "Kirim Alert", Icons.Filled.Warning)
-
     object Profile : MedicalNavItem("med_profile", "Profil", Icons.Filled.AccountCircle)
-    object Analytics : MedicalNavItem("analytics_tab", "Analitik", Icons.Filled.PieChart) // Pastikan import ikon PieChart
 }
 
 @Composable
@@ -65,7 +60,6 @@ fun MedicalDashboardScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
-                                    // Tambahan clickable untuk memunculkan dialog
                                     .clickable {
                                         selectedReport = report
                                         showDialog = true
@@ -98,10 +92,9 @@ fun MedicalDashboardScreen(
         }
     }
 
-    // Pop-up Dialog untuk Verifikasi
+    // PERBAIKAN: Mengembalikan Dialog Verifikasi
     if (showDialog && selectedReport != null) {
         var staffNote by remember { mutableStateOf(selectedReport?.staffNote ?: "") }
-        // Default opsi status
         var expanded by remember { mutableStateOf(false) }
         var currentStatus by remember { mutableStateOf(selectedReport?.status ?: "Pending") }
         val statusOptions = listOf("Pending", "Reviewed", "Investigating", "Confirmed", "Closed")
@@ -113,8 +106,6 @@ fun MedicalDashboardScreen(
                 Column {
                     Text("Lokasi: ${selectedReport?.city}, ${selectedReport?.province}", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Dropdown untuk memilih Status
                     Text("Status Penanganan:", style = MaterialTheme.typography.labelMedium)
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
@@ -124,15 +115,11 @@ fun MedicalDashboardScreen(
                             statusOptions.forEach { option ->
                                 DropdownMenuItem(
                                     text = { Text(option) },
-                                    onClick = {
-                                        currentStatus = option
-                                        expanded = false
-                                    }
+                                    onClick = { currentStatus = option; expanded = false }
                                 )
                             }
                         }
                     }
-
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = staffNote,
@@ -146,105 +133,27 @@ fun MedicalDashboardScreen(
             confirmButton = {
                 Button(onClick = {
                     val staffName = userProfile?.name ?: "Unknown Staff"
-
-                    // Kita memanggil verifyReport dan menambahkan aksi onSuccess
                     reportViewModel.verifyReport(
                         reportId = selectedReport!!.reportId,
                         newStatus = currentStatus,
                         staffNote = staffNote,
                         medicalStaffName = staffName,
                         onSuccess = {
-                            // Tutup dialog
                             showDialog = false
-
-                            // Minta MedicalViewModel untuk mengambil ulang data terbaru.
-                            // Catatan: Ganti 'fetchReports()' dengan nama fungsi
-                            // yang Anda gunakan di MedicalViewModel untuk mengambil data.
-                            // Biasanya bernama fetchReports(), getReports(), atau loadData().
                             viewModel.fetchReports()
                         }
                     )
-                }) {
-                    Text("Simpan")
-                }
+                }) { Text("Simpan") }
             },
-            dismissButton = {
-                OutlinedButton(onClick = { showDialog = false }) {
-                    Text("Batal")
-                }
-            }
+            dismissButton = { OutlinedButton(onClick = { showDialog = false }) { Text("Batal") } }
         )
     }
 }
 
 @Composable
-fun MedicalAddEducationScreen(viewModel: com.example.episense.viewmodel.AddEducationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
-    var title by remember { mutableStateOf("") }
-    var content by remember { mutableStateOf("") }
-    val uiState by viewModel.uiState.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("Tulis Artikel Edukasi", style = MaterialTheme.typography.headlineMedium)
-        Text("Artikel ini akan tayang di halaman masyarakat", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = { Text("Judul Artikel (Misal: Cara Cegah Malaria)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = content,
-            onValueChange = { content = it },
-            label = { Text("Isi Artikel (Penjelasan lengkap)") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp), // Lebih tinggi agar nyaman untuk menulis artikel
-            maxLines = 10
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { viewModel.addEducation(title, content) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = uiState !is com.example.episense.viewmodel.AddEducationState.Loading
-        ) {
-            if (uiState is com.example.episense.viewmodel.AddEducationState.Loading) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                Text("Publikasikan Artikel")
-            }
-        }
-
-        // Feedback UI dengan delay agar tidak langsung hilang
-        when (uiState) {
-            is com.example.episense.viewmodel.AddEducationState.Success -> {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("✅ Artikel Edukasi berhasil dipublikasikan!", color = androidx.compose.ui.graphics.Color.Green, fontWeight = FontWeight.Bold)
-
-                LaunchedEffect(Unit) {
-                    title = ""
-                    content = ""
-                    kotlinx.coroutines.delay(3000)
-                    viewModel.resetState()
-                }
-            }
-            is com.example.episense.viewmodel.AddEducationState.Error -> {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("❌ ${(uiState as com.example.episense.viewmodel.AddEducationState.Error).message}", color = MaterialTheme.colorScheme.error)
-            }
-            else -> {}
-        }
+fun MedicalAddEducationScreen() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Form Tambah Edukasi (Akan Segera Datang)")
     }
 }
 
@@ -263,23 +172,9 @@ fun MedicalAddAlertScreen(viewModel: com.example.episense.viewmodel.AddAlertView
         Text("Pesan ini akan disebarkan ke seluruh masyarakat", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = { Text("Judul Peringatan (Misal: Waspada DBD)") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Judul Peringatan (Misal: Waspada DBD)") }, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = message,
-            onValueChange = { message = it },
-            label = { Text("Isi Pesan Edukasi / Instruksi") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp),
-            maxLines = 5
-        )
+        OutlinedTextField(value = message, onValueChange = { message = it }, label = { Text("Isi Pesan Edukasi / Instruksi") }, modifier = Modifier.fillMaxWidth().height(150.dp), maxLines = 5)
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -288,28 +183,17 @@ fun MedicalAddAlertScreen(viewModel: com.example.episense.viewmodel.AddAlertView
             enabled = uiState !is com.example.episense.viewmodel.AddAlertState.Loading
         ) {
             if (uiState is com.example.episense.viewmodel.AddAlertState.Loading) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             } else {
                 Text("Kirim Peringatan Sekarang")
             }
         }
 
-        // Feedback UI setelah tombol ditekan
         when (uiState) {
             is com.example.episense.viewmodel.AddAlertState.Success -> {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("✅ Peringatan berhasil dikirim ke database!", color = androidx.compose.ui.graphics.Color.Green, fontWeight = FontWeight.Bold)
-
-                // Reset form otomatis
-                LaunchedEffect(Unit) {
-                    title = ""
-                    message = ""
-                    delay(3000)
-                    viewModel.resetState()
-                }
+                LaunchedEffect(Unit) { title = ""; message = ""; delay(3000); viewModel.resetState() }
             }
             is com.example.episense.viewmodel.AddAlertState.Error -> {
                 Spacer(modifier = Modifier.height(16.dp))

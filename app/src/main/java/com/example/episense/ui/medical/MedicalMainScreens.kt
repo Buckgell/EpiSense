@@ -1,8 +1,6 @@
 package com.example.episense.ui.medical
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,12 +11,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-// Tambahan parameter onLogoutSuccess
 fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
     val navController = rememberNavController()
-    // Masukkan MedicalNavItem.Profile ke dalam list
+
+    // PERBAIKAN: Memasukkan Analytics dan Profile ke dalam menu bawah
     val items = listOf(
         MedicalNavItem.Dashboard,
+        MedicalNavItem.Analytics,
         MedicalNavItem.AddEducation,
         MedicalNavItem.AddAlert,
         MedicalNavItem.Profile
@@ -53,13 +52,12 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MedicalNavItem.Dashboard.route) { MedicalDashboardScreen() }
+            composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() } // Rute Analitik
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
-            composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
-            // Tambahan rute untuk layar profil
             composable(MedicalNavItem.Profile.route) {
                 com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
-            }
+            } // Rute Profil
         }
     }
 }
