@@ -40,9 +40,12 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.ui.text.font.FontWeight
 import com.example.episense.viewmodel.ReportState
 import com.example.episense.viewmodel.ReportViewModel
 
@@ -170,7 +173,8 @@ fun EducationScreen(viewModel: com.example.episense.viewmodel.EducationViewModel
 }
 
 @Composable
-fun ReportScreen(viewModel: ReportViewModel = viewModel()) {
+fun ReportScreen(viewModel: ReportViewModel = viewModel(),
+                 onNavigateToHistory: () -> Unit = {}) {
     var province by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
     var fever by remember { mutableStateOf(false) }
@@ -211,6 +215,13 @@ fun ReportScreen(viewModel: ReportViewModel = viewModel()) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Lapor Gejala Malaria", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = onNavigateToHistory,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Lihat Riwayat Laporan Saya")
+        }
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(value = province, onValueChange = { province = it }, label = { Text("Provinsi") }, modifier = Modifier.fillMaxWidth())
@@ -305,6 +316,90 @@ fun AlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = viewM
     }
 }
 
+@Composable
+fun MyReportsScreen(
+    reportViewModel: com.example.episense.viewmodel.ReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    profileViewModel: com.example.episense.viewmodel.ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    val myReports by reportViewModel.myReports.collectAsState()
+    val userProfile by profileViewModel.userProfile.collectAsState()
+
+    // Panggil fetchMyReports saat layar pertama kali dibuka
+    LaunchedEffect(userProfile?.userId) {
+        userProfile?.userId?.let { userId ->
+            reportViewModel.fetchMyReports(userId)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Riwayat Laporan Saya", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (myReports.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Anda belum pernah membuat laporan.")
+            }
+        } else {
+            LazyColumn {
+                items(myReports.size) { index ->
+                    val report = myReports[index]
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Dilaporkan: ${report.city}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = androidx.compose.ui.graphics.Color.Gray
+                                )
+                                // Warna status menyesuaikan
+                                val statusColor = if (report.status == "Pending") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                Surface(
+                                    color = statusColor.copy(alpha = 0.1f),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        report.status,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = statusColor
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val gejala = mutableListOf<String>()
+                            if (report.fever) gejala.add("Demam")
+                            if (report.chills) gejala.add("Menggigil")
+                            if (report.headache) gejala.add("Sakit Kepala")
+                            if (report.nausea) gejala.add("Mual")
+                            Text("Gejala Anda: ${if (gejala.isEmpty()) "Tidak ada" else gejala.joinToString(", ")}", fontWeight = FontWeight.Bold)
+
+                            // Tampilkan catatan medis JIKA sudah di-review oleh nakes
+                            if (report.status != "Pending" && report.staffNote.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider()
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Tanggapan Medis:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Text("\"${report.staffNote}\"", style = MaterialTheme.typography.bodyMedium, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                                Text("Oleh: ${report.updatedBy}", style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color.Gray)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 @Composable
 fun AIScreen(viewModel: com.example.episense.viewmodel.ChatViewModel = viewModel()) {
     val messages by viewModel.messages.collectAsState()

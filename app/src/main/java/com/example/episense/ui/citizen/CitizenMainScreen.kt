@@ -58,21 +58,27 @@ fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
                 }
             }
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(BottomNavItem.Home.route) { HomeScreen() }
-            composable(BottomNavItem.Education.route) { EducationScreen() }
-            composable(BottomNavItem.Report.route) { ReportScreen() }
-            composable(BottomNavItem.Alert.route) { AlertScreen() }
-            composable(BottomNavItem.AI.route) { AIScreen() }
-            // Tambahan rute untuk layar profil
-            composable(BottomNavItem.Profile.route) {
-                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
-            }
+    ) { innerPadding ->NavHost(
+        navController = navController,
+        startDestination = BottomNavItem.Home.route,
+        modifier = Modifier.padding(innerPadding)
+    ) {
+        composable(BottomNavItem.Home.route) { HomeScreen() }
+        composable(BottomNavItem.Education.route) { EducationScreen() }
+
+        // 1. Ubah bagian ReportScreen agar menerima perintah navigasi
+        composable(BottomNavItem.Report.route) {
+            ReportScreen(onNavigateToHistory = { navController.navigate("my_reports") })
         }
+
+        // 2. Gunakan String langsung ("my_reports"), BUKAN BottomNavItem
+        composable("my_reports") { MyReportsScreen() }
+
+        composable(BottomNavItem.Alert.route) { AlertScreen() }
+        composable(BottomNavItem.AI.route) { AIScreen() }
+        composable(BottomNavItem.Profile.route) {
+            com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+        }
+    }
     }
 }

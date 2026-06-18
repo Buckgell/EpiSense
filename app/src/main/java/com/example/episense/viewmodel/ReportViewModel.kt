@@ -20,7 +20,29 @@ class ReportViewModel : ViewModel() {
 
     private val _reportState = MutableStateFlow<ReportState>(ReportState.Idle)
     val reportState: StateFlow<ReportState> = _reportState
+    private val _myReports = kotlinx.coroutines.flow.MutableStateFlow<List<com.example.episense.model.Report>>(emptyList())
+    val myReports: kotlinx.coroutines.flow.StateFlow<List<com.example.episense.model.Report>> = _myReports
 
+    fun fetchMyReports(userId: String) {
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+        db.collection("reports")
+            .whereEqualTo("userId", userId)
+            // Opsional: .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    println("Gagal mengambil riwayat laporan: ${e.message}")
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val reportList = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject(com.example.episense.model.Report::class.java)
+                    }
+                    _myReports.value = reportList
+                }
+            }
+    }
     fun submitReport(province: String, city: String, fever: Boolean, chills: Boolean, headache: Boolean, nausea: Boolean) {
         viewModelScope.launch {
             _reportState.value = ReportState.Loading
