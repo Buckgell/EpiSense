@@ -90,10 +90,22 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("home") {
-                            CitizenMainScreen()
+                            com.example.episense.ui.citizen.CitizenMainScreen(
+                                onLogoutSuccess = {
+                                    navController.navigate("login") {
+                                        popUpTo(0) { inclusive = true } // Bersihkan semua backstack
+                                    }
+                                }
+                            )
                         }
                         composable("medical_home") {
-                            com.example.episense.ui.medical.MedicalMainScreen()
+                            com.example.episense.ui.medical.MedicalMainScreen(
+                                onLogoutSuccess = {
+                                    navController.navigate("login") {
+                                        popUpTo(0) { inclusive = true } // Bersihkan semua backstack
+                                    }
+                                }
+                            )
                         }
                     }
                 }

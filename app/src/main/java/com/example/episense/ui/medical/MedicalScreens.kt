@@ -3,6 +3,7 @@ package com.example.episense.ui.medical
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Warning
@@ -23,6 +24,8 @@ sealed class MedicalNavItem(val route: String, val title: String, val icon: Imag
     object Dashboard : MedicalNavItem("med_dashboard", "Laporan", Icons.Filled.List)
     object AddEducation : MedicalNavItem("med_add_edu", "Edukasi", Icons.Filled.MenuBook)
     object AddAlert : MedicalNavItem("med_add_alert", "Kirim Alert", Icons.Filled.Warning)
+
+    object Profile : MedicalNavItem("med_profile", "Profil", Icons.Filled.AccountCircle)
 }
 
 @Composable

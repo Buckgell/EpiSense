@@ -1,6 +1,8 @@
 package com.example.episense.ui.medical
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,9 +13,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun MedicalMainScreen() {
+// Tambahan parameter onLogoutSuccess
+fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
     val navController = rememberNavController()
-    val items = listOf(MedicalNavItem.Dashboard, MedicalNavItem.AddEducation, MedicalNavItem.AddAlert)
+    // Masukkan MedicalNavItem.Profile ke dalam list
+    val items = listOf(
+        MedicalNavItem.Dashboard,
+        MedicalNavItem.AddEducation,
+        MedicalNavItem.AddAlert,
+        MedicalNavItem.Profile
+    )
 
     Scaffold(
         bottomBar = {
@@ -46,6 +55,10 @@ fun MedicalMainScreen() {
             composable(MedicalNavItem.Dashboard.route) { MedicalDashboardScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
+            // Tambahan rute untuk layar profil
+            composable(MedicalNavItem.Profile.route) {
+                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+            }
         }
     }
 }

@@ -17,19 +17,23 @@ sealed class BottomNavItem(val route: String, val title: String, val icon: andro
     object Education : BottomNavItem("education_tab", "Edukasi", Icons.Filled.Info)
     object Report : BottomNavItem("report_tab", "Lapor", Icons.Filled.AddCircle)
     object Alert : BottomNavItem("alert_tab", "Alert", Icons.Filled.Warning)
-    object AI : BottomNavItem("ai_tab", "AI", Icons.Filled.Person) // Menggunakan Person sementara untuk AI
+    object AI : BottomNavItem("ai_tab", "AI", Icons.Filled.Face) // Diganti Face agar tidak bentrok dengan Profil
+    object Profile : BottomNavItem("profile_tab", "Profil", Icons.Filled.AccountCircle) // Tambahan Tab Profil
 }
 
 @Composable
-fun CitizenMainScreen() {
+// Tambahan parameter onLogoutSuccess
+fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
     val navController = rememberNavController()
 
+    // Tambahkan Profile ke dalam daftar items agar muncul di bawah
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Education,
         BottomNavItem.Report,
         BottomNavItem.Alert,
-        BottomNavItem.AI
+        BottomNavItem.AI,
+        BottomNavItem.Profile
     )
 
     Scaffold(
@@ -65,6 +69,10 @@ fun CitizenMainScreen() {
             composable(BottomNavItem.Report.route) { ReportScreen() }
             composable(BottomNavItem.Alert.route) { AlertScreen() }
             composable(BottomNavItem.AI.route) { AIScreen() }
+            // Tambahan rute untuk layar profil
+            composable(BottomNavItem.Profile.route) {
+                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+            }
         }
     }
 }

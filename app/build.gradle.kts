@@ -35,6 +35,12 @@ android {
 }
 
 dependencies {
+    // Library untuk Grafik Analitik (MPAndroidChart)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    // Library untuk Google Maps & Peta di Jetpack Compose
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation(libs.androidx.compose.material.icons.extended)
     implementation("androidx.navigation:navigation-compose:2.7.7")
