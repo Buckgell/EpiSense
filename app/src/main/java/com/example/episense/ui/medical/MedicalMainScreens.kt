@@ -55,6 +55,7 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             composable(MedicalNavItem.Dashboard.route) { MedicalDashboardScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
+            composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
             // Tambahan rute untuk layar profil
             composable(MedicalNavItem.Profile.route) {
                 com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.episense.ui.citizen.BottomNavItem
 
 sealed class MedicalNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Dashboard : MedicalNavItem("med_dashboard", "Laporan", Icons.Filled.List)
@@ -27,6 +29,7 @@ sealed class MedicalNavItem(val route: String, val title: String, val icon: Imag
     object AddAlert : MedicalNavItem("med_add_alert", "Kirim Alert", Icons.Filled.Warning)
 
     object Profile : MedicalNavItem("med_profile", "Profil", Icons.Filled.AccountCircle)
+    object Analytics : MedicalNavItem("analytics_tab", "Analitik", Icons.Filled.PieChart) // Pastikan import ikon PieChart
 }
 
 @Composable
