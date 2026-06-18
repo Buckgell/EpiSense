@@ -24,7 +24,7 @@ class MedicalViewModel : ViewModel() {
         fetchReports()
     }
 
-    private fun fetchReports() {
+    fun fetchReports() {
         viewModelScope.launch {
             _uiState.value = MedicalState.Loading
             val result = repository.getAllReports()

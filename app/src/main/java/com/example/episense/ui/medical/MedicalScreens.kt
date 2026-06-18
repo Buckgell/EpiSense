@@ -1,5 +1,6 @@
 package com.example.episense.ui.medical
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -29,8 +30,16 @@ sealed class MedicalNavItem(val route: String, val title: String, val icon: Imag
 }
 
 @Composable
-fun MedicalDashboardScreen(viewModel: com.example.episense.viewmodel.MedicalViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun MedicalDashboardScreen(
+    viewModel: com.example.episense.viewmodel.MedicalViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    reportViewModel: com.example.episense.viewmodel.ReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    profileViewModel: com.example.episense.viewmodel.ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
+    val userProfile by profileViewModel.userProfile.collectAsState()
+
+    var selectedReport by remember { mutableStateOf<com.example.episense.model.Report?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Dashboard Tenaga Medis", style = MaterialTheme.typography.headlineMedium)
@@ -49,7 +58,17 @@ fun MedicalDashboardScreen(viewModel: com.example.episense.viewmodel.MedicalView
                     LazyColumn {
                         items(reports.size) { index ->
                             val report = reports[index]
-                            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    // Tambahan clickable untuk memunculkan dialog
+                                    .clickable {
+                                        selectedReport = report
+                                        showDialog = true
+                                    },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("${report.city}, ${report.province}", fontWeight = FontWeight.Bold)
@@ -74,6 +93,84 @@ fun MedicalDashboardScreen(viewModel: com.example.episense.viewmodel.MedicalView
                 Text((uiState as com.example.episense.viewmodel.MedicalState.Error).message, color = MaterialTheme.colorScheme.error)
             }
         }
+    }
+
+    // Pop-up Dialog untuk Verifikasi
+    if (showDialog && selectedReport != null) {
+        var staffNote by remember { mutableStateOf(selectedReport?.staffNote ?: "") }
+        // Default opsi status
+        var expanded by remember { mutableStateOf(false) }
+        var currentStatus by remember { mutableStateOf(selectedReport?.status ?: "Pending") }
+        val statusOptions = listOf("Pending", "Reviewed", "Investigating", "Confirmed", "Closed")
+
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Verifikasi & Update Laporan") },
+            text = {
+                Column {
+                    Text("Lokasi: ${selectedReport?.city}, ${selectedReport?.province}", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Dropdown untuk memilih Status
+                    Text("Status Penanganan:", style = MaterialTheme.typography.labelMedium)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(currentStatus)
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            statusOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        currentStatus = option
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = staffNote,
+                        onValueChange = { staffNote = it },
+                        label = { Text("Catatan Medis (Tindak Lanjut)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 3
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val staffName = userProfile?.name ?: "Unknown Staff"
+
+                    // Kita memanggil verifyReport dan menambahkan aksi onSuccess
+                    reportViewModel.verifyReport(
+                        reportId = selectedReport!!.reportId,
+                        newStatus = currentStatus,
+                        staffNote = staffNote,
+                        medicalStaffName = staffName,
+                        onSuccess = {
+                            // Tutup dialog
+                            showDialog = false
+
+                            // Minta MedicalViewModel untuk mengambil ulang data terbaru.
+                            // Catatan: Ganti 'fetchReports()' dengan nama fungsi
+                            // yang Anda gunakan di MedicalViewModel untuk mengambil data.
+                            // Biasanya bernama fetchReports(), getReports(), atau loadData().
+                            viewModel.fetchReports()
+                        }
+                    )
+                }) {
+                    Text("Simpan")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 }
 

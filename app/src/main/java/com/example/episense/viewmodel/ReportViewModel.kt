@@ -48,6 +48,36 @@ class ReportViewModel : ViewModel() {
         }
     }
 
+    // Tambahkan fungsi ini di dalam ReportViewModel
+    fun verifyReport(
+        reportId: String,
+        newStatus: String,
+        staffNote: String,
+        medicalStaffName: String,
+        onSuccess: () -> Unit
+    ) {
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+        // Data yang akan di-update ke Firestore
+        val updates = mapOf(
+            "status" to newStatus,
+            "staffNote" to staffNote,
+            "caseVerification" to newStatus,
+            "updatedBy" to medicalStaffName,
+            "updatedAt" to System.currentTimeMillis()
+        )
+
+        db.collection("reports").document(reportId)
+            .update(updates)
+            .addOnSuccessListener {
+                println("Berhasil memverifikasi laporan!")
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                println("Gagal memverifikasi: ${e.message}")
+            }
+    }
+
     fun resetState() {
         _reportState.value = ReportState.Idle
     }
