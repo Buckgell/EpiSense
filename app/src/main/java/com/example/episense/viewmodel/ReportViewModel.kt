@@ -20,6 +20,7 @@ class ReportViewModel : ViewModel() {
 
     private val _reportState = MutableStateFlow<ReportState>(ReportState.Idle)
     val reportState: StateFlow<ReportState> = _reportState
+
     private val _myReports = kotlinx.coroutines.flow.MutableStateFlow<List<com.example.episense.model.Report>>(emptyList())
     val myReports: kotlinx.coroutines.flow.StateFlow<List<com.example.episense.model.Report>> = _myReports
 
@@ -43,10 +44,11 @@ class ReportViewModel : ViewModel() {
                 }
             }
     }
+
     fun submitReport(province: String, city: String, fever: Boolean, chills: Boolean, headache: Boolean, nausea: Boolean) {
         viewModelScope.launch {
             _reportState.value = ReportState.Loading
-            // Dummy GPS location sementara (Tahap 10 nanti kita ganti dengan Google Maps SDK asli)
+            // Dummy GPS location sementara (Tahap 10 nanti kita ganti dengan SDK asli)
             val dummyLat = -7.250445
             val dummyLon = 112.768845
 
@@ -70,10 +72,11 @@ class ReportViewModel : ViewModel() {
         }
     }
 
-    // Tambahkan fungsi ini di dalam ReportViewModel
+    // UPDATED: Menambahkan parameter caseVerification
     fun verifyReport(
         reportId: String,
         newStatus: String,
+        caseVerification: String, // <--- Tambahan parameter baru
         staffNote: String,
         medicalStaffName: String,
         onSuccess: () -> Unit
@@ -84,7 +87,7 @@ class ReportViewModel : ViewModel() {
         val updates = mapOf(
             "status" to newStatus,
             "staffNote" to staffNote,
-            "caseVerification" to newStatus,
+            "caseVerification" to caseVerification, // <--- Sekarang mengambil dari parameter
             "updatedBy" to medicalStaffName,
             "updatedAt" to System.currentTimeMillis()
         )

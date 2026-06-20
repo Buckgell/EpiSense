@@ -51,12 +51,7 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             startDestination = MedicalNavItem.Dashboard.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Dashboard dengan akses ke Map
-            composable(MedicalNavItem.Dashboard.route) {
-                MedicalDashboardScreen(
-                    onNavigateToMap = { navController.navigate("map_screen") }
-                )
-            }
+
 
             composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
