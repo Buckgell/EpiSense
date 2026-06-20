@@ -21,7 +21,7 @@ class MedicalDashboardViewModel : ViewModel() {
     private val _highRiskArea = MutableStateFlow("-")
     val highRiskArea: StateFlow<String> = _highRiskArea
 
-    private val _outbreakStatus = MutableStateFlow("Normal")
+    private val _outbreakStatus = MutableStateFlow("Menghitung...")
     val outbreakStatus: StateFlow<String> = _outbreakStatus
 
     init {
@@ -29,50 +29,57 @@ class MedicalDashboardViewModel : ViewModel() {
     }
 
     private fun fetchDashboardStats() {
-        // 1. Listen ke collection "reports" untuk menghitung total laporan, kasus konfirmasi, dan wilayah risiko tinggi
         db.collection("reports").addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                Log.e("DashboardVM", "Error fetching reports: ${error.message}")
-                return@addSnapshotListener
-            }
+            if (error != null || snapshot == null) return@addSnapshotListener
 
-            if (snapshot != null) {
-                _totalReports.value = snapshot.size()
+            _totalReports.value = snapshot.size()
 
-                // Hitung total yang "Confirmed"
-                var confirmedCount = 0
-                val cityRiskCount = mutableMapOf<String, Int>() // Untuk mencari kota dengan risiko tinggi terbanyak
+            var confirmedCount = 0
+            val cityRiskCount = mutableMapOf<String, Int>()
 
-                for (doc in snapshot.documents) {
-                    val caseVerification = doc.getString("caseVerification") ?: ""
-                    if (caseVerification == "Confirmed") {
-                        confirmedCount++
-                    }
+            // Variabel untuk algoritma Outbreak Detection
+            var currentWeekCases = 0
+            var previous4WeeksCases = 0
+            val currentTime = System.currentTimeMillis()
+            val oneWeekInMillis = 7L * 24 * 60 * 60 * 1000
 
-                    val riskLevel = doc.getString("riskLevel") ?: ""
-                    val city = doc.getString("city") ?: "Tidak diketahui"
+            for (doc in snapshot.documents) {
+                val caseVerification = doc.getString("caseVerification") ?: ""
+                val riskLevel = doc.getString("riskLevel") ?: ""
+                val city = doc.getString("city") ?: "Tidak diketahui"
+                val date = doc.getLong("date") ?: 0L
 
-                    if (riskLevel == "High" || riskLevel == "Tinggi") {
-                        cityRiskCount[city] = cityRiskCount.getOrDefault(city, 0) + 1
-                    }
+                if (riskLevel == "High" || riskLevel == "Tinggi") {
+                    cityRiskCount[city] = cityRiskCount.getOrDefault(city, 0) + 1
                 }
 
-                _totalConfirmedCases.value = confirmedCount
+                if (caseVerification == "Confirmed") {
+                    confirmedCount++
 
-                // Tentukan wilayah risiko tinggi (kota dengan laporan 'High' terbanyak)
-                val topHighRiskCity = cityRiskCount.maxByOrNull { it.value }?.key
-                _highRiskArea.value = topHighRiskCity ?: "Aman"
+                    // Hitung kasus berdasarkan waktu untuk Outbreak Detection
+                    val timeDiff = currentTime - date
+                    if (timeDiff <= oneWeekInMillis) {
+                        currentWeekCases++
+                    } else if (timeDiff <= 5 * oneWeekInMillis) {
+                        previous4WeeksCases++
+                    }
+                }
+            }
+
+            _totalConfirmedCases.value = confirmedCount
+            _highRiskArea.value = cityRiskCount.maxByOrNull { it.value }?.key ?: "Aman"
+
+            // Logika Outbreak Recognition SRS: Jika minggu ini > 150% rata-rata 4 minggu sebelumnya
+            val avgPrevious4Weeks = previous4WeeksCases / 4.0
+            if (avgPrevious4Weeks > 0 && currentWeekCases > (1.5 * avgPrevious4Weeks)) {
+                _outbreakStatus.value = "⚠️ WABAH TERDETEKSI"
+            } else {
+                _outbreakStatus.value = "Normal"
             }
         }
 
-        // 2. Listen ke collection "alerts" untuk menghitung total alert yang aktif
         db.collection("alerts").addSnapshotListener { snapshot, error ->
-            if (error == null && snapshot != null) {
-                _totalAlerts.value = snapshot.size()
-            }
+            if (error == null && snapshot != null) _totalAlerts.value = snapshot.size()
         }
-
-        // Catatan: _outbreakStatus sementara di-set "Normal",
-        // nilainya akan diubah dinamis nanti di Tahap 6 (Outbreak Pattern Recognition)
     }
 }
