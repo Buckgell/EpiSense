@@ -35,7 +35,7 @@ class ChatViewModel : ViewModel() {
 
     private val generativeModel = GenerativeModel(
         modelName = "gemini-2.5-flash",
-        apiKey = "input api" // <-- Jangan lupa masukkan API Key Anda lagi
+        apiKey = "" // <-- Jangan lupa masukkan API Key Anda lagi
     )
 
     // Menyimpan listener agar bisa dimatikan saat logout

@@ -15,14 +15,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.episense.viewmodel.AnalyticsViewModel
 import com.example.episense.viewmodel.MedicalState
 import com.example.episense.viewmodel.MedicalViewModel
+import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.data.PieData
-import com.github.mikephil.charting.data.PieDataSet
-import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.utils.ColorTemplate
 
 @Composable
@@ -38,9 +35,12 @@ fun AnalyticsScreen(
     }
     val statusCounts = reports.groupingBy { it.status }.eachCount()
 
-    // --- State dari AnalyticsViewModel (Untuk Line Chart & AI) ---
+    // --- State dari AnalyticsViewModel (Untuk Line Chart, Bar Chart, Lag & AI) ---
     val chartData by analyticsViewModel.chartData.collectAsState()
-    val smoothedData by analyticsViewModel.smoothedChartData.collectAsState() // TAMBAHAN: Data diperhalus
+    val smoothedData by analyticsViewModel.smoothedChartData.collectAsState()
+    val seasonalityData by analyticsViewModel.seasonalityData.collectAsState()
+    val lagCorrelations by analyticsViewModel.lagCorrelations.collectAsState()
+    val peakMonth by analyticsViewModel.peakMonth.collectAsState()
     val aiAnalysis by analyticsViewModel.aiAnalysis.collectAsState()
 
     // Agar layar bisa di-scroll karena kontennya panjang
@@ -53,71 +53,46 @@ fun AnalyticsScreen(
             .verticalScroll(scrollState)
     ) {
         Text("Analitik Epidemiologi", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
         Text("Visualisasi dan prediksi data sebaran malaria", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
         Spacer(modifier = Modifier.height(24.dp))
 
         // ==========================================
         // 1. BAGIAN PIE CHART (Distribusi Status)
         // ==========================================
-        Text("Distribusi Status Laporan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-
+        SectionTitle("Distribusi Status Laporan")
         Card(
             modifier = Modifier.fillMaxWidth().height(300.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(2.dp)
         ) {
-            if (uiState is MedicalState.Loading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (reports.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Belum ada data laporan untuk dianalisis.")
-                }
-            } else {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    factory = { context ->
-                        PieChart(context).apply {
-                            description.isEnabled = false
-                            isDrawHoleEnabled = false
-                            setEntryLabelColor(AndroidColor.BLACK)
-                            setUsePercentValues(true)
-                        }
-                    },
-                    update = { chart ->
-                        val entries = statusCounts.map { (status, count) ->
-                            PieEntry(count.toFloat(), status)
-                        }
-                        val dataSet = PieDataSet(entries, "").apply {
-                            colors = ColorTemplate.MATERIAL_COLORS.toList()
-                            valueTextSize = 14f
-                            valueTextColor = AndroidColor.BLACK
-                            sliceSpace = 3f
-                        }
-                        chart.data = PieData(dataSet)
-                        chart.invalidate()
+            AndroidView(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                factory = { context ->
+                    PieChart(context).apply {
+                        description.isEnabled = false
+                        isDrawHoleEnabled = false
+                        setUsePercentValues(true)
                     }
-                )
-            }
+                },
+                update = { chart ->
+                    val entries = statusCounts.map { PieEntry(it.value.toFloat(), it.key) }
+                    chart.data = PieData(PieDataSet(entries, "").apply { colors = ColorTemplate.MATERIAL_COLORS.toList() })
+                    chart.invalidate()
+                }
+            )
         }
-
         Spacer(modifier = Modifier.height(32.dp))
 
         // ==========================================
-        // 2. BAGIAN LINE CHART (Tren Waktu & Noise Filter)
+        // 2. BAGIAN LINE CHART (Tren Waktu & Noise Filtering)
         // ==========================================
-        Text("Tren Kasus Malaria (Time Series)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-
+        SectionTitle("Tren Kasus Malaria (Time Series)")
         Card(
             modifier = Modifier.fillMaxWidth().height(300.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(2.dp)
         ) {
-            if (chartData.isNotEmpty() && smoothedData.isNotEmpty()) {
+            if (chartData.isNotEmpty()) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     factory = { context ->
@@ -125,59 +100,91 @@ fun AnalyticsScreen(
                             description.isEnabled = false
                             axisRight.isEnabled = false
                             xAxis.position = XAxis.XAxisPosition.BOTTOM
-                            xAxis.granularity = 1f
-                            setTouchEnabled(true)
-                            isDragEnabled = true
-                            setScaleEnabled(true)
-                            legend.isEnabled = true // Aktifkan legend untuk membedakan dua garis
                         }
                     },
                     update = { chart ->
-                        // Garis 1: Data Asli (Merah, tipis)
-                        val dataSetRaw = LineDataSet(chartData, "Data Mentah (Noise)").apply {
+                        val dataSetRaw = LineDataSet(chartData, "Data Mentah").apply {
                             color = AndroidColor.argb(100, 255, 0, 0)
-                            valueTextColor = AndroidColor.TRANSPARENT // Sembunyikan angka agar rapi
+                            valueTextColor = AndroidColor.TRANSPARENT
                             lineWidth = 1.5f
-                            setCircleColor(AndroidColor.RED)
-                            circleRadius = 3f
                             setDrawFilled(false)
                         }
-
-                        // Garis 2: Data Diperhalus / Moving Average (Biru, tebal)
-                        val dataSetSmoothed = LineDataSet(smoothedData, "Tren Utama (Moving Avg)").apply {
+                        val dataSetSmoothed = LineDataSet(smoothedData, "Moving Avg").apply {
                             color = AndroidColor.BLUE
-                            valueTextColor = AndroidColor.BLACK
                             lineWidth = 3f
-                            setCircleColor(AndroidColor.BLUE)
-                            circleRadius = 5f
                             setDrawFilled(true)
-                            fillColor = AndroidColor.argb(50, 0, 0, 255) // Biru transparan
+                            fillColor = AndroidColor.argb(50, 0, 0, 255)
                         }
-
-                        // Masukkan kedua garis ke dalam chart
                         chart.data = LineData(dataSetRaw, dataSetSmoothed)
                         chart.invalidate()
                     }
                 )
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Memuat tren grafik...")
-                }
             }
         }
-
         Spacer(modifier = Modifier.height(32.dp))
 
         // ==========================================
-        // 3. BAGIAN AI ANALYSIS (Gemini)
+        // 3. BAGIAN BAR CHART (Seasonality Analysis)
         // ==========================================
-        Text(
-            text = "AI Outbreak Analysis",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        SectionTitle("Pola Musiman (Seasonality)")
+        Text("Puncak kasus rata-rata terjadi pada Bulan ke-$peakMonth", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth().height(250.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            if (seasonalityData.isNotEmpty()) {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    factory = { context ->
+                        BarChart(context).apply {
+                            description.isEnabled = false
+                            axisRight.isEnabled = false
+                            xAxis.position = XAxis.XAxisPosition.BOTTOM
+                        }
+                    },
+                    update = { chart ->
+                        val dataSet = BarDataSet(seasonalityData, "Kasus per Bulan").apply {
+                            color = AndroidColor.rgb(255, 152, 0)
+                        }
+                        chart.data = BarData(dataSet)
+                        chart.invalidate()
+                    }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // ==========================================
+        // 4. BAGIAN LAG CORRELATION
+        // ==========================================
+        SectionTitle("Korelasi Curah Hujan (Lag Analysis)")
+        val bestLag = lagCorrelations.maxByOrNull { it.second }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Dampak curah hujan terhadap lonjakan kasus:", style = MaterialTheme.typography.titleSmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                lagCorrelations.forEach { (lag, corr) ->
+                    Text("Lag $lag Bulan: Skor Korelasi = ${String.format("%.2f", corr)}", style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Korelasi Tertinggi: Lag ${bestLag?.first ?: 0} (Waktu tunggu lonjakan kasus setelah puncak hujan)", fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // ==========================================
+        // 5. BAGIAN AI ANALYSIS (Gemini)
+        // ==========================================
+        SectionTitle("AI Outbreak Analysis")
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -189,7 +196,12 @@ fun AnalyticsScreen(
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
-
-        Spacer(modifier = Modifier.height(32.dp)) // Spasi bawah agar tidak tertutup BottomBar
+        Spacer(modifier = Modifier.height(32.dp))
     }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(8.dp))
 }
