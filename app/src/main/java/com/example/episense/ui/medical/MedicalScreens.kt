@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Warning
@@ -31,7 +32,8 @@ sealed class MedicalNavItem(val route: String, val title: String, val icon: Imag
 fun MedicalDashboardScreen(
     viewModel: com.example.episense.viewmodel.MedicalViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     reportViewModel: com.example.episense.viewmodel.ReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    profileViewModel: com.example.episense.viewmodel.ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    profileViewModel: com.example.episense.viewmodel.ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onNavigateToMap: () -> Unit = {} // Tambahan parameter
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val userProfile by profileViewModel.userProfile.collectAsState()
@@ -42,6 +44,20 @@ fun MedicalDashboardScreen(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Dashboard Tenaga Medis", style = MaterialTheme.typography.headlineMedium)
         Text("Daftar Laporan Gejala Masyarakat", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+
+        // --- TAMBAHAN TOMBOL PETA ---
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onNavigateToMap,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        ) {
+            Icon(androidx.compose.material.icons.Icons.Filled.LocationOn, contentDescription = "Peta")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Buka Peta Sebaran Kasus")
+        }
+        // -----------------------------
+
         Spacer(modifier = Modifier.height(16.dp))
 
         when (uiState) {
@@ -92,7 +108,6 @@ fun MedicalDashboardScreen(
         }
     }
 
-    // PERBAIKAN: Mengembalikan Dialog Verifikasi
     if (showDialog && selectedReport != null) {
         var staffNote by remember { mutableStateOf(selectedReport?.staffNote ?: "") }
         var expanded by remember { mutableStateOf(false) }
@@ -157,10 +172,17 @@ fun MedicalAddEducationScreen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicalAddAlertScreen(viewModel: com.example.episense.viewmodel.AddAlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun MedicalAddAlertScreen(
+    viewModel: com.example.episense.viewmodel.AddAlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     var title by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    var severity by remember { mutableStateOf("Medium") }
+    var expanded by remember { mutableStateOf(false) }
+    val severities = listOf("Low", "Medium", "High")
+
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -168,36 +190,83 @@ fun MedicalAddAlertScreen(viewModel: com.example.episense.viewmodel.AddAlertView
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Kirim Peringatan Baru", style = MaterialTheme.typography.headlineMedium)
-        Text("Pesan ini akan disebarkan ke seluruh masyarakat", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+        Text("Buat Peringatan Baru", style = MaterialTheme.typography.headlineMedium)
+        Text("Kirim notifikasi waspada wabah ke seluruh warga.", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Judul Peringatan (Misal: Waspada DBD)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Judul Peringatan (Contoh: Waspada DBD)") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(value = message, onValueChange = { message = it }, label = { Text("Isi Pesan Edukasi / Instruksi") }, modifier = Modifier.fillMaxWidth().height(150.dp), maxLines = 5)
-        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = message,
+            onValueChange = { message = it },
+            label = { Text("Detail Pesan") },
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 5
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = severity,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Tingkat Bahaya") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                severities.forEach { selection ->
+                    DropdownMenuItem(
+                        text = { Text(selection) },
+                        onClick = {
+                            severity = selection
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { viewModel.sendAlert(title, message) },
+            onClick = { viewModel.addAlert(title, message, severity) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = uiState !is com.example.episense.viewmodel.AddAlertState.Loading
+            enabled = title.isNotBlank() && message.isNotBlank() && uiState !is com.example.episense.viewmodel.AddAlertState.Loading
         ) {
             if (uiState is com.example.episense.viewmodel.AddAlertState.Loading) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Kirim Peringatan Sekarang")
+                Text("Kirim Peringatan")
             }
         }
 
         when (uiState) {
             is com.example.episense.viewmodel.AddAlertState.Success -> {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("✅ Peringatan berhasil dikirim ke database!", color = androidx.compose.ui.graphics.Color.Green, fontWeight = FontWeight.Bold)
-                LaunchedEffect(Unit) { title = ""; message = ""; delay(3000); viewModel.resetState() }
+                Text("Peringatan berhasil dikirim!", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp))
+                // Kosongkan form setelah sukses
+                LaunchedEffect(Unit) {
+                    title = ""
+                    message = ""
+                    severity = "Medium"
+                }
             }
             is com.example.episense.viewmodel.AddAlertState.Error -> {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("❌ ${(uiState as com.example.episense.viewmodel.AddAlertState.Error).message}", color = MaterialTheme.colorScheme.error)
+                Text((uiState as com.example.episense.viewmodel.AddAlertState.Error).message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp))
             }
             else -> {}
         }

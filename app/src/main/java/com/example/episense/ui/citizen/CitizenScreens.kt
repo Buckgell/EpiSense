@@ -37,6 +37,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,7 +52,10 @@ import com.example.episense.viewmodel.ReportState
 import com.example.episense.viewmodel.ReportViewModel
 
 @Composable
-fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = viewModel()) {
+fun HomeScreen(
+    viewModel: com.example.episense.viewmodel.HomeViewModel = viewModel(),
+    onNavigateToMap: () -> Unit = {} // Tambahan parameter
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -62,6 +67,20 @@ fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = viewMod
         Text("Halo, Warga!", style = MaterialTheme.typography.headlineMedium)
         Text("Berikut adalah ringkasan situasi malaria saat ini.", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- TAMBAHAN TOMBOL PETA ---
+        Button(
+            onClick = onNavigateToMap,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        ) {
+            Icon(androidx.compose.material.icons.Icons.Filled.LocationOn, contentDescription = "Peta")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Buka Peta Sebaran Kasus")
+        }
+        // -----------------------------
+
         Spacer(modifier = Modifier.height(24.dp))
 
         when (uiState) {
@@ -72,8 +91,6 @@ fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = viewMod
             }
             is com.example.episense.viewmodel.HomeState.Success -> {
                 val state = uiState as com.example.episense.viewmodel.HomeState.Success
-
-                // 1. Kartu Peringatan Terbaru
                 state.latestAlert?.let { alert ->
                     Text("Peringatan Terbaru", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
@@ -91,8 +108,6 @@ fun HomeScreen(viewModel: com.example.episense.viewmodel.HomeViewModel = viewMod
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
-
-                // 2. Kartu Statistik Kasus
                 Text("Statistik 30 Laporan Terakhir", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Card(

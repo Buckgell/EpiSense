@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -17,16 +16,14 @@ sealed class BottomNavItem(val route: String, val title: String, val icon: andro
     object Education : BottomNavItem("education_tab", "Edukasi", Icons.Filled.Info)
     object Report : BottomNavItem("report_tab", "Lapor", Icons.Filled.AddCircle)
     object Alert : BottomNavItem("alert_tab", "Alert", Icons.Filled.Warning)
-    object AI : BottomNavItem("ai_tab", "AI", Icons.Filled.Face) // Diganti Face agar tidak bentrok dengan Profil
-    object Profile : BottomNavItem("profile_tab", "Profil", Icons.Filled.AccountCircle) // Tambahan Tab Profil
+    object AI : BottomNavItem("ai_tab", "AI", Icons.Filled.Face)
+    object Profile : BottomNavItem("profile_tab", "Profil", Icons.Filled.AccountCircle)
 }
 
 @Composable
-// Tambahan parameter onLogoutSuccess
 fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
     val navController = rememberNavController()
 
-    // Tambahkan Profile ke dalam daftar items agar muncul di bawah
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Education,
@@ -58,27 +55,34 @@ fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
                 }
             }
         }
-    ) { innerPadding ->NavHost(
-        navController = navController,
-        startDestination = BottomNavItem.Home.route,
-        modifier = Modifier.padding(innerPadding)
-    ) {
-        composable(BottomNavItem.Home.route) { HomeScreen() }
-        composable(BottomNavItem.Education.route) { EducationScreen() }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = BottomNavItem.Home.route,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            // PERBAIKAN: Berikan akses navigasi peta ke HomeScreen
+            composable(BottomNavItem.Home.route) {
+                HomeScreen(onNavigateToMap = { navController.navigate("map_screen") })
+            }
+            composable(BottomNavItem.Education.route) { EducationScreen() }
+            composable(BottomNavItem.Report.route) {
+                ReportScreen(onNavigateToHistory = { navController.navigate("my_reports") })
+            }
+            composable("my_reports") { MyReportsScreen() }
 
-        // 1. Ubah bagian ReportScreen agar menerima perintah navigasi
-        composable(BottomNavItem.Report.route) {
-            ReportScreen(onNavigateToHistory = { navController.navigate("my_reports") })
+            // PERBAIKAN: Daftarkan layar peta di sini
+            composable("map_screen") {
+                com.example.episense.ui.map.MapScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(BottomNavItem.Alert.route) { AlertScreen() }
+            composable(BottomNavItem.AI.route) { AIScreen() }
+            composable(BottomNavItem.Profile.route) {
+                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+            }
         }
-
-        // 2. Gunakan String langsung ("my_reports"), BUKAN BottomNavItem
-        composable("my_reports") { MyReportsScreen() }
-
-        composable(BottomNavItem.Alert.route) { AlertScreen() }
-        composable(BottomNavItem.AI.route) { AIScreen() }
-        composable(BottomNavItem.Profile.route) {
-            com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
-        }
-    }
     }
 }

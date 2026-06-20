@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.episense.viewmodel.AlertState
+import com.example.episense.viewmodel.AlertViewModel
 
 fun formatAlertDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID"))
@@ -24,7 +26,9 @@ fun formatAlertDate(timestamp: Long): String {
 }
 
 @Composable
-fun CitizenAlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun CitizenAlertScreen(
+    viewModel: AlertViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -45,23 +49,23 @@ fun CitizenAlertScreen(viewModel: com.example.episense.viewmodel.AlertViewModel 
         Spacer(modifier = Modifier.height(16.dp))
 
         when (uiState) {
-            is com.example.episense.viewmodel.AlertState.Loading -> {
+            is AlertState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            is com.example.episense.viewmodel.AlertState.Error -> {
-                val errorMessage = (uiState as com.example.episense.viewmodel.AlertState.Error).message
+            is AlertState.Error -> {
+                val errorMessage = (uiState as AlertState.Error).message
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Terjadi Kesalahan:\n$errorMessage", color = MaterialTheme.colorScheme.error)
                 }
             }
-            is com.example.episense.viewmodel.AlertState.Success -> {
-                val alerts = (uiState as com.example.episense.viewmodel.AlertState.Success).alerts
+            is AlertState.Success -> {
+                val alerts = (uiState as AlertState.Success).alerts
 
                 if (alerts.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Belum ada peringatan saat ini.", color = Color.Gray)
+                        Text("Aman! Belum ada peringatan saat ini.", color = Color.Gray)
                     }
                 } else {
                     LazyColumn(
@@ -90,7 +94,6 @@ fun AlertCard(alert: com.example.episense.model.Alert) {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        // PERBAIKAN 1: Tambahkan .height(IntrinsicSize.Min) di sini
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,7 +102,6 @@ fun AlertCard(alert: com.example.episense.model.Alert) {
             Box(
                 modifier = Modifier
                     .width(8.dp)
-                    // PERBAIKAN 2: Ganti matchParentSize menjadi fillMaxHeight
                     .fillMaxHeight()
                     .background(indicatorColor)
             )
@@ -118,6 +120,7 @@ fun AlertCard(alert: com.example.episense.model.Alert) {
                 Text(text = alert.message, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
+                    // Sesuaikan ke alert.date jika model Alert.kt Anda menggunakan variabel date
                     text = formatAlertDate(alert.date),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,

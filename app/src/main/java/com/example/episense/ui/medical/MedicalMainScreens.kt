@@ -14,7 +14,6 @@ import androidx.navigation.compose.rememberNavController
 fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
     val navController = rememberNavController()
 
-    // PERBAIKAN: Memasukkan Analytics dan Profile ke dalam menu bawah
     val items = listOf(
         MedicalNavItem.Dashboard,
         MedicalNavItem.Analytics,
@@ -51,13 +50,22 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             startDestination = MedicalNavItem.Dashboard.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(MedicalNavItem.Dashboard.route) { MedicalDashboardScreen() }
-            composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() } // Rute Analitik
+            // PERBAIKAN: Berikan akses navigasi peta ke Dashboard Medis
+            composable(MedicalNavItem.Dashboard.route) {
+                MedicalDashboardScreen(onNavigateToMap = { navController.navigate("map_screen") })
+            }
+            composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
             composable(MedicalNavItem.Profile.route) {
                 com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
-            } // Rute Profil
+            }
+
+            composable("map_screen") {
+                com.example.episense.ui.map.MapScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

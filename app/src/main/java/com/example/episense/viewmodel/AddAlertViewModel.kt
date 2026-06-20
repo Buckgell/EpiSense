@@ -1,11 +1,9 @@
 package com.example.episense.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.episense.repository.AlertRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 sealed class AddAlertState {
     object Idle : AddAlertState()
@@ -15,30 +13,30 @@ sealed class AddAlertState {
 }
 
 class AddAlertViewModel : ViewModel() {
-    private val repository = AlertRepository()
-
+    private val db = FirebaseFirestore.getInstance()
     private val _uiState = MutableStateFlow<AddAlertState>(AddAlertState.Idle)
     val uiState: StateFlow<AddAlertState> = _uiState
 
-    fun sendAlert(title: String, message: String) {
-        if (title.isBlank() || message.isBlank()) {
-            _uiState.value = AddAlertState.Error("Judul dan pesan tidak boleh kosong")
-            return
-        }
+    fun addAlert(title: String, message: String, severity: String) {
+        _uiState.value = AddAlertState.Loading
 
-        viewModelScope.launch {
-            _uiState.value = AddAlertState.Loading
-            val result = repository.sendAlert(title, message)
+        // Kita gunakan System.currentTimeMillis() untuk mengisi field date
+        val alertData = hashMapOf(
+            "title" to title,
+            "message" to message,
+            "severity" to severity,
+            "date" to System.currentTimeMillis()
+        )
 
-            if (result.isSuccess) {
+        db.collection("alerts")
+            .add(alertData)
+            .addOnSuccessListener {
                 _uiState.value = AddAlertState.Success
-            } else {
-                _uiState.value = AddAlertState.Error(result.exceptionOrNull()?.message ?: "Gagal mengirim peringatan")
+                // Kembalikan state ke Idle setelah beberapa saat jika diperlukan
+                // atau biarkan UI yang meresetnya (seperti yang sudah kita buat di Screen)
             }
-        }
-    }
-
-    fun resetState() {
-        _uiState.value = AddAlertState.Idle
+            .addOnFailureListener { e ->
+                _uiState.value = AddAlertState.Error(e.message ?: "Gagal mengirim peringatan.")
+            }
     }
 }
