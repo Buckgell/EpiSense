@@ -9,22 +9,17 @@ data class Report(
     val longitude: Double = 0.0,
     val date: Long = System.currentTimeMillis(),
 
-    // Gejala yang dilaporkan (Tidak boleh diubah oleh medis)
+    // Gejala
     val fever: Boolean = false,
     val chills: Boolean = false,
     val headache: Boolean = false,
     val nausea: Boolean = false,
-    val riskLevel: String = "Low",
+    val riskLevel: String = "Low", // Low, Medium, High
 
-    // Status Penanganan: Pending, Reviewed, Investigating, Confirmed, Closed
-    val status: String = "Pending",
-
-    // --- FIELD BARU UNTUK MEDICAL STAFF ---
+    // Status Penanganan (SRS Baru)
+    val status: String = "Pending", // Pending, Reviewed, Investigating, Confirmed, Closed
     val staffNote: String = "",
-
-    // Verifikasi Kasus: Pending, Suspected, Confirmed, Rejected
-    val caseVerification: String = "Pending",
-
+    val caseVerification: String = "Pending", // Suspected, Confirmed, Rejected, Pending
     val updatedBy: String = "",
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = 0L
 )

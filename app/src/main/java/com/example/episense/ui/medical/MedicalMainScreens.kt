@@ -35,6 +35,7 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
                         selected = currentRoute == item.route,
                         onClick = {
                             navController.navigate(item.route) {
+                                // Mencegah penumpukan stack saat berpindah tab
                                 popUpTo(navController.graph.startDestinationId) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
@@ -50,17 +51,23 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             startDestination = MedicalNavItem.Dashboard.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // PERBAIKAN: Berikan akses navigasi peta ke Dashboard Medis
+            // Dashboard dengan akses ke Map
             composable(MedicalNavItem.Dashboard.route) {
-                MedicalDashboardScreen(onNavigateToMap = { navController.navigate("map_screen") })
+                MedicalDashboardScreen(
+                    onNavigateToMap = { navController.navigate("map_screen") }
+                )
             }
+
             composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
+
+            // Profil dengan parameter logout yang sudah diperbaiki
             composable(MedicalNavItem.Profile.route) {
-                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+                com.example.episense.ui.profile.ProfileScreen(onNavigateToLogin = onLogoutSuccess)
             }
 
+            // Rute Peta (Map)
             composable("map_screen") {
                 com.example.episense.ui.map.MapScreen(
                     onNavigateBack = { navController.popBackStack() }

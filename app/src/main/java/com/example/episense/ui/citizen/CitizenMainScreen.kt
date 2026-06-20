@@ -81,7 +81,8 @@ fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
             composable(BottomNavItem.Alert.route) { AlertScreen() }
             composable(BottomNavItem.AI.route) { AIScreen() }
             composable(BottomNavItem.Profile.route) {
-                com.example.episense.ui.profile.ProfileScreen(onLogoutSuccess = onLogoutSuccess)
+                // Ubah nama parameternya menjadi onNavigateToLogin
+                com.example.episense.ui.profile.ProfileScreen(onNavigateToLogin = onLogoutSuccess)
             }
         }
     }

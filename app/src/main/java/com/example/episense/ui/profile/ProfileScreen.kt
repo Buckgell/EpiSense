@@ -1,68 +1,67 @@
 package com.example.episense.ui.profile
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.episense.viewmodel.ProfileViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ProfileScreen(
-    onLogoutSuccess: () -> Unit,
-    viewModel: ProfileViewModel = viewModel()
+    authViewModel: com.example.episense.viewmodel.AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onNavigateToLogin: () -> Unit
 ) {
-    val userProfile by viewModel.userProfile.collectAsState()
+    val currentUser = FirebaseAuth.getInstance().currentUser
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Picture",
-            modifier = Modifier.size(120.dp),
+            imageVector = Icons.Default.Person,
+            contentDescription = "Profile Icon",
+            modifier = Modifier.size(100.dp),
             tint = MaterialTheme.colorScheme.primary
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Informasi Akun",
+            style = MaterialTheme.typography.headlineMedium
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (userProfile != null) {
-            Text(text = userProfile!!.name, style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = userProfile!!.email, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = currentUser?.email ?: "Tidak ada email",
+            onValueChange = {},
+            label = { Text("Email Pengguna") },
+            readOnly = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            // Badge Role
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = CircleShape
-            ) {
-                Text(
-                    text = userProfile!!.role.uppercase(),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        } else {
-            CircularProgressIndicator()
-        }
+        // Catatan: Jika butuh Edit Profile untuk Nama, kita akan tarik data dari collection 'users' nanti.
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = {
-                viewModel.logout()
-                onLogoutSuccess() // Memicu navigasi kembali ke layar Login
+                authViewModel.logout {
+                    onNavigateToLogin()
+                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
             Spacer(modifier = Modifier.width(8.dp))

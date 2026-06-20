@@ -7,6 +7,7 @@ import com.example.episense.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 
 // Menyimpan status/state layar saat ini
 sealed class AuthState {
@@ -44,6 +45,11 @@ class AuthViewModel : ViewModel() {
                 _authState.value = AuthState.Error(result.exceptionOrNull()?.message ?: "Register Gagal")
             }
         }
+    }
+
+    fun logout(onLogoutSuccess: () -> Unit) {
+        FirebaseAuth.getInstance().signOut()
+        onLogoutSuccess()
     }
 
     fun resetState() {
