@@ -165,10 +165,72 @@ fun MedicalDashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicalAddEducationScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Form Tambah Edukasi (Akan Segera Datang)")
+fun MedicalAddEducationScreen(
+    viewModel: com.example.episense.viewmodel.AddEducationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text("Publikasi Edukasi", style = MaterialTheme.typography.headlineMedium)
+        Text("Berikan panduan dan informasi kesehatan kepada masyarakat.", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Judul Artikel (Contoh: Cara Mencegah DBD)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = content,
+            onValueChange = { content = it },
+            label = { Text("Isi Panduan / Artikel") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 6,
+            maxLines = 12
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            // Sesuaikan dengan ViewModel Anda yang hanya meminta title dan content
+            onClick = { viewModel.addEducation(title, content) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = title.isNotBlank() && content.isNotBlank() && uiState !is com.example.episense.viewmodel.AddEducationState.Loading
+        ) {
+            if (uiState is com.example.episense.viewmodel.AddEducationState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+            } else {
+                Text("Publikasikan Edukasi")
+            }
+        }
+
+        when (uiState) {
+            is com.example.episense.viewmodel.AddEducationState.Success -> {
+                Text("Artikel edukasi berhasil dipublikasikan!", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp))
+
+                // Kosongkan form dan kembalikan state ke Idle
+                LaunchedEffect(Unit) {
+                    title = ""
+                    content = ""
+                    viewModel.resetState()
+                }
+            }
+            is com.example.episense.viewmodel.AddEducationState.Error -> {
+                Text((uiState as com.example.episense.viewmodel.AddEducationState.Error).message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp))
+            }
+            else -> {}
+        }
     }
 }
 
