@@ -83,7 +83,7 @@ class ChatViewModel : ViewModel() {
 
         val welcomeMessage = ChatMessage(
             messageId = UUID.randomUUID().toString(),
-            text = "Halo! Saya asisten AI EpiSense HITAM. Ada yang bisa saya bantu terkait informasi kesehatan atau malaria hari ini?",
+            text = "Halo! Saya asisten AI EpiSense. Ada yang bisa saya bantu terkait informasi kesehatan atau malaria hari ini?",
             isUser = false
         )
         _messages.value = listOf(welcomeMessage)
