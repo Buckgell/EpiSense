@@ -21,11 +21,18 @@ import com.example.episense.viewmodel.*
 
 sealed class MedicalNavItem(val route: String, val title: String, val icon: ImageVector) {
     object Dashboard : MedicalNavItem("med_dashboard", "Laporan", Icons.Filled.List)
-    object Analytics : MedicalNavItem("analytics_tab", "Analitik", Icons.Filled.PieChart)
-    object AddEducation : MedicalNavItem("med_add_edu", "Edukasi", Icons.Filled.MenuBook)
+
+    // PERBAIKAN 2: Menggunakan Icons.Filled.Info agar tidak crash
+    object Analytics : MedicalNavItem("analytics_tab", "Analitik", Icons.Filled.Info)
+
+    // PERBAIKAN 3: Menggunakan Icons.Filled.Create agar tidak crash
+    object AddEducation : MedicalNavItem("med_add_edu", "Edukasi", Icons.Filled.Create)
+
     object AddAlert : MedicalNavItem("med_add_alert", "Kirim Alert", Icons.Filled.Warning)
     object Profile : MedicalNavItem("med_profile", "Profil", Icons.Filled.AccountCircle)
 }
+
+// ... Sisa kode fungsi MedicalDashboardScreen dkk biarkan seperti semula ...
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

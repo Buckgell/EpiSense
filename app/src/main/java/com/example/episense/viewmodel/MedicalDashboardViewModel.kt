@@ -30,7 +30,10 @@ class MedicalDashboardViewModel : ViewModel() {
 
     private fun fetchDashboardStats() {
         db.collection("reports").addSnapshotListener { snapshot, error ->
-            if (error != null || snapshot == null) return@addSnapshotListener
+            if (error != null || snapshot == null) {
+                Log.e("DashboardVM", "Error fetching reports", error)
+                return@addSnapshotListener
+            }
 
             _totalReports.value = snapshot.size()
 
@@ -44,32 +47,44 @@ class MedicalDashboardViewModel : ViewModel() {
             val oneWeekInMillis = 7L * 24 * 60 * 60 * 1000
 
             for (doc in snapshot.documents) {
-                val caseVerification = doc.getString("caseVerification") ?: ""
-                val riskLevel = doc.getString("riskLevel") ?: ""
-                val city = doc.getString("city") ?: "Tidak diketahui"
-                val date = doc.getLong("date") ?: 0L
+                try {
+                    // PERBAIKAN: Membungkus pengambilan data dengan try-catch
+                    // Jika ada data lama yang tipe datanya aneh/rusak, tidak akan membuat aplikasi Force Close!
+                    val caseVerification = try { doc.getString("caseVerification") ?: "" } catch (e: Exception) { "" }
+                    val riskLevel = try { doc.getString("riskLevel") ?: "" } catch (e: Exception) { "" }
+                    val city = try { doc.getString("city") ?: "Tidak diketahui" } catch (e: Exception) { "Tidak diketahui" }
 
-                if (riskLevel == "High" || riskLevel == "Tinggi") {
-                    cityRiskCount[city] = cityRiskCount.getOrDefault(city, 0) + 1
-                }
-
-                if (caseVerification == "Confirmed") {
-                    confirmedCount++
-
-                    // Hitung kasus berdasarkan waktu untuk Outbreak Detection
-                    val timeDiff = currentTime - date
-                    if (timeDiff <= oneWeekInMillis) {
-                        currentWeekCases++
-                    } else if (timeDiff <= 5 * oneWeekInMillis) {
-                        previous4WeeksCases++
+                    // Amankan field date (karena sering beda format antara Long dan Timestamp di data lama)
+                    val date = try {
+                        doc.getLong("date") ?: 0L
+                    } catch (e: Exception) {
+                        try { doc.getTimestamp("date")?.toDate()?.time ?: 0L } catch (e2: Exception) { 0L }
                     }
+
+                    if (riskLevel == "High" || riskLevel == "Tinggi") {
+                        cityRiskCount[city] = cityRiskCount.getOrDefault(city, 0) + 1
+                    }
+
+                    if (caseVerification == "Confirmed") {
+                        confirmedCount++
+
+                        // Hitung kasus berdasarkan waktu untuk Outbreak Detection
+                        val timeDiff = currentTime - date
+                        if (timeDiff <= oneWeekInMillis) {
+                            currentWeekCases++
+                        } else if (timeDiff <= 5 * oneWeekInMillis) {
+                            previous4WeeksCases++
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("DashboardVM", "Melewati dokumen yang rusak: ${doc.id}", e)
                 }
             }
 
             _totalConfirmedCases.value = confirmedCount
             _highRiskArea.value = cityRiskCount.maxByOrNull { it.value }?.key ?: "Aman"
 
-            // Logika Outbreak Recognition SRS: Jika minggu ini > 150% rata-rata 4 minggu sebelumnya
+            // Logika Outbreak Recognition SRS
             val avgPrevious4Weeks = previous4WeeksCases / 4.0
             if (avgPrevious4Weeks > 0 && currentWeekCases > (1.5 * avgPrevious4Weeks)) {
                 _outbreakStatus.value = "⚠️ WABAH TERDETEKSI"
