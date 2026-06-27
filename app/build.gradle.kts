@@ -37,7 +37,6 @@ android {
 dependencies {
     // Library untuk Grafik Analitik (MPAndroidChart)
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-    implementation("com.google.firebase:firebase-storage-ktx")
 // Library Peta Gratis (OpenStreetMap)
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
@@ -47,6 +46,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
