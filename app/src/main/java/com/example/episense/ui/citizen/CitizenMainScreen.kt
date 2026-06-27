@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -61,9 +62,12 @@ fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
             startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // PERBAIKAN: Berikan akses navigasi peta ke HomeScreen
             composable(BottomNavItem.Home.route) {
-                HomeScreen(onNavigateToMap = { navController.navigate("map_screen") })
+                HomeScreen(
+                    onNavigateToMap = { navController.navigate("map_screen") },
+                    // PERBAIKAN: Menyambungkan tombol Galeri Media ke rutenya
+                    onNavigateToSharedMedia = { navController.navigate("shared_media") }
+                )
             }
             composable(BottomNavItem.Education.route) { EducationScreen() }
             composable(BottomNavItem.Report.route) {
@@ -71,17 +75,26 @@ fun CitizenMainScreen(onLogoutSuccess: () -> Unit = {}) {
             }
             composable("my_reports") { MyReportsScreen() }
 
-            // PERBAIKAN: Daftarkan layar peta di sini
             composable("map_screen") {
                 com.example.episense.ui.map.MapScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
+            composable("shared_media") {
+                val profileViewModel: com.example.episense.viewmodel.ProfileViewModel = viewModel()
+                val userProfile by profileViewModel.userProfile.collectAsState()
+
+                com.example.episense.ui.shared.SharedMediaScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    currentUserRole = "Warga",
+                    currentUserName = userProfile?.name ?: "Warga Anonim"
+                )
+            }
+
             composable(BottomNavItem.Alert.route) { AlertScreen() }
             composable(BottomNavItem.AI.route) { AIScreen() }
             composable(BottomNavItem.Profile.route) {
-                // Ubah nama parameternya menjadi onNavigateToLogin
                 com.example.episense.ui.profile.ProfileScreen(onNavigateToLogin = onLogoutSuccess)
             }
         }

@@ -3,8 +3,10 @@ package com.example.episense.ui.medical
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -50,16 +52,28 @@ fun MedicalMainScreen(onLogoutSuccess: () -> Unit = {}) {
             startDestination = MedicalNavItem.Dashboard.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // PERBAIKAN 1: Rute ini sebelumnya HILANG di kode Anda
             composable(MedicalNavItem.Dashboard.route) {
                 MedicalDashboardScreen(
-                    onNavigateToMap = { navController.navigate("map_screen") }
+                    onNavigateToMap = { navController.navigate("map_screen") },
+                    onNavigateToSharedMedia = { navController.navigate("shared_media") }
                 )
             }
 
             composable(MedicalNavItem.Analytics.route) { AnalyticsScreen() }
             composable(MedicalNavItem.AddEducation.route) { MedicalAddEducationScreen() }
             composable(MedicalNavItem.AddAlert.route) { MedicalAddAlertScreen() }
+
+            composable("shared_media") {
+                // Mengambil profil asli agar tidak Anonim
+                val profileViewModel: com.example.episense.viewmodel.ProfileViewModel = viewModel()
+                val userProfile by profileViewModel.userProfile.collectAsState()
+
+                com.example.episense.ui.shared.SharedMediaScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    currentUserRole = "Tenaga Medis", // Sudah diubah khusus untuk sisi Medis
+                    currentUserName = userProfile?.name ?: "Tim Medis"
+                )
+            }
 
             composable(MedicalNavItem.Profile.route) {
                 com.example.episense.ui.profile.ProfileScreen(onNavigateToLogin = onLogoutSuccess)

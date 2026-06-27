@@ -38,6 +38,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,7 +55,8 @@ import com.example.episense.viewmodel.ReportViewModel
 @Composable
 fun HomeScreen(
     viewModel: com.example.episense.viewmodel.HomeViewModel = viewModel(),
-    onNavigateToMap: () -> Unit = {} // Tambahan parameter
+    onNavigateToMap: () -> Unit = {},
+    onNavigateToSharedMedia: () -> Unit = {} // <--- TAMBAHAN PARAMETER BARU
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -69,7 +71,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- TAMBAHAN TOMBOL PETA ---
+        // Tombol Peta
         Button(
             onClick = onNavigateToMap,
             modifier = Modifier.fillMaxWidth(),
@@ -79,7 +81,19 @@ fun HomeScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text("Buka Peta Sebaran Kasus")
         }
-        // -----------------------------
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // <--- TAMBAHAN TOMBOL GALERI VIDEO & EDUKASI --->
+        Button(
+            onClick = onNavigateToSharedMedia,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+        ) {
+            Icon(androidx.compose.material.icons.Icons.Filled.PlayArrow, contentDescription = "Media")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Lihat Galeri Video & Edukasi")
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

@@ -41,7 +41,8 @@ fun MedicalDashboardScreen(
     medicalViewModel: MedicalViewModel = viewModel(),
     reportViewModel: ReportViewModel = viewModel(),
     profileViewModel: ProfileViewModel = viewModel(),
-    onNavigateToMap: () -> Unit = {}
+    onNavigateToMap: () -> Unit = {},
+    onNavigateToSharedMedia: () -> Unit = {}
 ) {
     val totalReports by dashboardViewModel.totalReports.collectAsState()
     val totalConfirmed by dashboardViewModel.totalConfirmedCases.collectAsState()
@@ -89,6 +90,16 @@ fun MedicalDashboardScreen(
                 Icon(Icons.Default.Place, contentDescription = "Map")
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Lihat Peta Persebaran Malaria")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onNavigateToSharedMedia,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Media")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Buka Galeri Edukasi & Video")
             }
 
             Spacer(modifier = Modifier.height(32.dp))
