@@ -74,6 +74,7 @@ fun SharedMediaScreen(
 
     if (showDialog) {
         var title by remember { mutableStateOf("") }
+        var urlInput by remember { mutableStateOf("") }
         var selectedUri by remember { mutableStateOf<Uri?>(null) }
         var selectedMediaType by remember { mutableStateOf("") }
         var isUploading by remember { mutableStateOf(false) }
@@ -89,65 +90,81 @@ fun SharedMediaScreen(
 
         AlertDialog(
             onDismissRequest = { if (!isUploading) showDialog = false },
-            title = { Text("Upload Foto / Video") },
+            title = { Text("Bagikan Media") },
             text = {
                 Column {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Judul Media") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isUploading
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Judul Media") }, modifier = Modifier.fillMaxWidth())
 
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Pilih salah satu metode:", style = MaterialTheme.typography.labelMedium)
+
+                    // Tombol File Picker
                     OutlinedButton(
-                        onClick = {
-                            mediaPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isUploading
+                        onClick = { mediaPicker.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (selectedUri == null) "Pilih dari Galeri" else "File Dipilih (${selectedMediaType})")
+                        Text(if (selectedUri == null) "Pilih Foto/Video dari Galeri" else "File Dipilih")
                     }
 
-                    if (isUploading) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text("Mengupload media, harap tunggu...")
-                        }
-                    }
+                    Text("ATAU masukkan link URL:", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+
+                    // Input URL
+                    OutlinedTextField(
+                        value = urlInput, // Pastikan Anda buat state 'var urlInput by remember { mutableStateOf("") }'
+                        onValueChange = { urlInput = it; selectedUri = null }, // Reset uri jika user isi URL
+                        label = { Text("Link (YouTube/Web)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {
                 Button(
+                    enabled = !isUploading && (title.isNotBlank() && (selectedUri != null || urlInput.isNotBlank())),
                     onClick = {
                         isUploading = true
-                        viewModel.uploadMediaFile(
-                            fileUri = selectedUri!!,
-                            title = title,
-                            mediaType = selectedMediaType,
-                            uploaderName = currentUserName,
-                            uploaderRole = currentUserRole,
-                            onSuccess = {
-                                isUploading = false
-                                showDialog = false
-                                Toast.makeText(context, "Upload Berhasil!", Toast.LENGTH_SHORT).show()
-                            },
-                            onError = { errorMsg ->
-                                isUploading = false
-                                Toast.makeText(context, "Gagal: $errorMsg", Toast.LENGTH_LONG).show()
-                            }
-                        )
-                    },
-                    enabled = title.isNotBlank() && selectedUri != null && !isUploading
-                ) { Text("Bagikan") }
+                        // Logika: Jika ada file, upload file. Jika tidak, kirim urlInput saja
+                        if (selectedUri != null) {
+                            viewModel.uploadMediaFile(
+                                selectedUri!!,
+                                title,
+                                selectedMediaType,
+                                currentUserName,
+                                currentUserRole,
+                                {
+                                    showDialog = false
+                                    Toast.makeText(context, "Media berhasil dibagikan", Toast.LENGTH_SHORT).show()
+                                },
+                                { error ->
+                                    isUploading = false
+                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        } else {
+                            viewModel.uploadMediaDirect(
+                                title,
+                                urlInput,
+                                currentUserName,
+                                currentUserRole,
+                                {
+                                    showDialog = false
+                                    Toast.makeText(context, "Link berhasil dibagikan", Toast.LENGTH_SHORT).show()
+                                },
+                                { error ->
+                                    isUploading = false
+                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    if (isUploading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Text("Bagikan")
+                    }
+                }
             },
-            dismissButton = {
-                OutlinedButton(onClick = { showDialog = false }, enabled = !isUploading) { Text("Batal") }
-            }
+            dismissButton = { OutlinedButton(onClick = { showDialog = false }) { Text("Batal") } }
         )
     }
 }

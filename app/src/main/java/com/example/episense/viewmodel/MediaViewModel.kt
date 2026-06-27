@@ -31,7 +31,11 @@ class MediaViewModel : ViewModel() {
                 }
             }
     }
-
+    fun uploadMediaDirect(title: String, url: String, name: String, role: String, onSuccess: () -> Unit) {
+        val id = UUID.randomUUID().toString()
+        val media = SharedMedia(id, title, url, "link", name, role, System.currentTimeMillis())
+        db.collection("shared_media").document(id).set(media).addOnSuccessListener { onSuccess() }
+    }
     // Fungsi Upload File ke Firebase Storage
     fun uploadMediaFile(
         fileUri: Uri,
