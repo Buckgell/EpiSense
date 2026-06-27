@@ -31,10 +31,27 @@ class MediaViewModel : ViewModel() {
                 }
             }
     }
-    fun uploadMediaDirect(title: String, url: String, name: String, role: String, onSuccess: () -> Unit) {
+    fun uploadMediaDirect(
+        title: String,
+        url: String,
+        uploaderName: String,
+        uploaderRole: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         val id = UUID.randomUUID().toString()
-        val media = SharedMedia(id, title, url, "link", name, role, System.currentTimeMillis())
-        db.collection("shared_media").document(id).set(media).addOnSuccessListener { onSuccess() }
+        val media = SharedMedia(
+            id = id,
+            title = title,
+            url = url,
+            mediaType = if (url.contains("youtube.com") || url.contains("youtu.be")) "video" else "image",
+            uploaderName = uploaderName,
+            uploaderRole = uploaderRole,
+            timestamp = System.currentTimeMillis()
+        )
+        db.collection("shared_media").document(id).set(media)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan link") }
     }
     // Fungsi Upload File ke Firebase Storage
     fun uploadMediaFile(
